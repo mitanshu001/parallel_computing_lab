@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#define SIZE 1
+#define SIZE 7
 
 int main(int argc, char** argv) {
-    freopen("summation_method2.csv","w",stdout);
+    freopen("summation_method2.csv","a+",stdout);
+    // printf("START\n");
     // Initialize the MPI environment
     MPI_Init(NULL, NULL);
 
@@ -24,99 +25,64 @@ int main(int argc, char** argv) {
 
     long long n = 1;
 
-
     for(long long k=1;k<=SIZE;++k){
-        n*=1LL*16;
+        n*=1LL*8;
         long long * arr;
         long long no_element_per_process;
         long long sum=0;
         double exec_time = 0.0;
         long long start;
         long long height = (long long)log2((double)world_size);
+        no_element_per_process = n/world_size;
         // printf("%lld %lld",n,height);
         if(world_rank == 0){
             arr = (long long*)malloc(n*sizeof(long long));
-            for(long long i=0;i<n;++i){
-                arr[i]=i;
+            
+            for(long long i=1;i<=n;++i){
+                arr[i-1]=i;
             }
-            no_element_per_process = n/world_size;
             start = 0;
-            printf("worldd_rank: %d\n",world_rank);
-        }
-        
+        } 
         long long sz  = n;
-        // printf("world_rank : %d\n",world_rank);
-        // MPI_Barrier(MPI_COMM_WORLD);
-        printf("world_rank : %d\n",world_rank);
         while(height>0){
-            printf("height : %lld  %d\n",height,world_rank );
             sz = sz>>1;
             if( world_rank%(1<<height) == 0 ){
-                MPI_Send(arr + sz, sz, MPI_LONG_LONG, 1<<(height-1) + world_rank , 0, MPI_COMM_WORLD);
+                int h = height-1;
+                h = 1<<h;
+                // printf("send %lld %d %d \n",height,h + world_rank ,world_rank);
+                MPI_Send(arr + sz, sz, MPI_LONG_LONG, h + world_rank , 0, MPI_COMM_WORLD);
             }
             else if( world_rank%(1<<(height-1)) == 0 ){
+                int h = height-1;
+                h = 1<<h;
+                // printf("rec %lld %d %d \n",height, world_rank - h,world_rank);
                 arr = (long long*)malloc(sz*sizeof(long long));
-                MPI_Recv(arr, sz, MPI_LONG_LONG, world_rank - 1<<(height-1), 0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(arr, sz, MPI_LONG_LONG, world_rank - h, 0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
             height--;
         }
-        printf("%d %lld \n",world_rank,sz);
+        // printf("ARR: %d %lld \n",world_rank,no_element_per_process);
 
         for(int i=0;i<no_element_per_process;++i){
             sum+=arr[i];
         }
-        MPI_Barrier(MPI_COMM_WORLD);
         long long depth = 1;
         height = (long long)log2((double)world_size);
-        printf("after barrier");
         while(depth <= height){ 
-            printf("depth: %lld %d\n",depth,world_rank);
             if(world_rank%(1<<depth) == 0 ){
                 long long temp;
-                MPI_Recv(&temp, 1, MPI_LONG_LONG, 1<<(depth-1) + world_rank , 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+                MPI_Recv(&temp, 1, MPI_LONG_LONG, (1<<(depth-1)) + world_rank , 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                 sum+=temp;
             }
             else if( world_rank%(1<<(depth-1)) == 0 ){
-                MPI_Send(&sum, 1, MPI_LONG_LONG, world_rank - 1<<(depth-1), 0    , MPI_COMM_WORLD);
+                MPI_Send(&sum, 1, MPI_LONG_LONG, world_rank - (1<<(depth-1)), 0    , MPI_COMM_WORLD);
             }
             depth++;
         }
         if(world_rank ==0 ){
-            printf("sum: %lld ",sum);
+            printf("n: %lld sum: %lld \n",n, sum);
         }
     }
-
-        
-    //     else{
-    //         MPI_Recv(&no_element_per_process,1,MPI_LONG_LONG,0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-    //         arr = (long long*)malloc(sizeof(long long)*no_element_per_process);
-    //         MPI_Recv(arr,no_element_per_process,MPI_LONG_LONG,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    //         // printf("receive %d ",world_rank);
-    //     }
-
-    //     MPI_Barrier(MPI_COMM_WORLD);
-    //     exec_time -= MPI_Wtime();
-    //     for(long long i=0;i<no_element_per_process;++i){
-    //         sum+=arr[i];
-    //     }
-
-    //     if(world_rank!=0){
-    //         MPI_Send(&sum,1,MPI_LONG_LONG,0,0,MPI_COMM_WORLD);
-    //     }
-
-    //     if(world_rank ==0 ){
-    //         long long temp;
-    //         for(long long i=1;i<world_size;++i){
-    //             MPI_Recv(&temp,1,MPI_LONG_LONG,i,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-    //             sum+=temp;
-    //         }
-    //         // printf("ending");
-    //         exec_time += MPI_Wtime();
-    //         printf("%lld,%f\n",n,exec_time);
-    //     }
-    // }
-
-
 
     // Finalize the MPI environment.
     MPI_Finalize();

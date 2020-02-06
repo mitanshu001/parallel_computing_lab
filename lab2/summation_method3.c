@@ -1,7 +1,12 @@
 #include <mpi.h>
 #include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#define SIZE 7
 
 int main(int argc, char** argv) {
+    freopen("summation_method3.csv","a+",stdout);
+    // printf("START\n");
     // Initialize the MPI environment
     MPI_Init(NULL, NULL);
 
@@ -18,38 +23,41 @@ int main(int argc, char** argv) {
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
 
-    int * arr;
-    int n = 100;
-    int no_element_per_process;
-    int sum=0;
-    double exec_time = 0.0;
+    long long n = 1;
 
-    if(world_rank == 0){
-        // scanf("%d",&n);
-        arr = (int*)malloc(n*sizeof(int));
-        for(int i=0;i<n;++i){
-            arr[i]=i;
-        }
+    for(long long k=1;k<=SIZE;++k){
+        n*=1LL*8;
+        long long * arr;
+        long long * rec_arr;
+        long long no_element_per_process;
+        long long sum=0;
+        double exec_time = 0.0;
+        long long start;
+        long long height = (long long)log2((double)world_size);
         no_element_per_process = n/world_size;
-        // printf("process 0 starts %d",no_element_per_process);
-        for(int i=1;i<world_size;++i){
-            MPI_Send(&no_element_per_process,1,MPI_INT, i, 0,MPI_COMM_WORLD );
-            MPI_Send(arr+no_element_per_process*i,no_element_per_process,MPI_INT,i,0,MPI_COMM_WORLD);
-        }
-        // printf("process 0 send complete");
-    }
+        // printf("%lld %lld",n,height);
+        if(world_rank == 0){
+            arr = (long long*)malloc(n*sizeof(long long));
+            
+            for(long long i=1;i<=n;++i){
+                arr[i-1]=i;
+            }
+            start = 0;
+        } 
+        long long sz  = n;
+        rec_arr = (long long*)malloc(no_element_per_process*sizeof(long long));
+        MPI_Scatter(arr, no_element_per_process,MPI_LONG_LONG, rec_arr, no_element_per_process, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
-    int number;
-    int number2;
-    number = world_rank;
-    MPI_Send(&number, 1, MPI_INT, (world_rank+1)%world_size, 1, MPI_COMM_WORLD);
-    printf("send comlplete");
-    MPI_Recv(&number2, 1 , MPI_INT, ((world_rank -1 )%world_size + world_size )%world_size, 0, MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
-    printf("rec complete");
-    // Print off a hello world message
-    printf("Hello world from processor %s, rank %d out of %d processors %d received\n",
-           processor_name, world_rank, world_size, number2);
+        for(int i=0;i<no_element_per_process;++i){
+            sum+=rec_arr[i];
+        }
+
+        long long global_sum;
+        MPI_Reduce(&sum,&global_sum,1,MPI_LONG_LONG, MPI_SUM,0,MPI_COMM_WORLD);
+        if(world_rank ==0 ){
+            printf("n: %lld sum: %lld \n",n, global_sum);
+        }
+    }
 
     // Finalize the MPI environment.
     MPI_Finalize();
