@@ -1,9 +1,9 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define SIZE 1
+#define SIZE 7
 int main(int argc, char** argv) {
-    freopen("summation_naive_exp.csv","w",stdout);
+    freopen("summation_naive.csv","+a",stdout);
     // Initialize the MPI environment
     MPI_Init(NULL, NULL);
 
@@ -20,10 +20,10 @@ int main(int argc, char** argv) {
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
 
-    long long n = 10;
+    long long n = 8;
 
     for(long long k=1;k<=SIZE;++k){
-        n*=10;
+        n*=8;
         MPI_Barrier(MPI_COMM_WORLD);
         long long * arr;
         long long no_element_per_process;
