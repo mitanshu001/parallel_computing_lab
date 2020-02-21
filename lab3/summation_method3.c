@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
 
-    long long n = 1;
+    long long n = 8;
 
     for(long long k=1;k<=SIZE;++k){
         n*=1LL*8;
@@ -47,15 +47,18 @@ int main(int argc, char** argv) {
         long long sz  = n;
         rec_arr = (long long*)malloc(no_element_per_process*sizeof(long long));
         MPI_Scatter(arr, no_element_per_process,MPI_LONG_LONG, rec_arr, no_element_per_process, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
-
+        MPI_Barrier(MPI_COMM_WORLD);
+        exec_time -= MPI_Wtime();
         for(int i=0;i<no_element_per_process;++i){
             sum+=rec_arr[i];
         }
 
         long long global_sum;
         MPI_Reduce(&sum,&global_sum,1,MPI_LONG_LONG, MPI_SUM,0,MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
+        exec_time += MPI_Wtime();
         if(world_rank ==0 ){
-            printf("n: %lld sum: %lld \n",n, global_sum);
+            printf("%lld  %f \n",n, exec_time);
         }
     }
 

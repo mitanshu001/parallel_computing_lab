@@ -116,8 +116,11 @@ int main(int argc, char** argv) {
             }
             phase++;
         }
-        // MPI_Barrier(MPI_Comm)
+        MPI_Barrier(MPI_COMM_WORLD);
         exec_time += MPI_Wtime();
+        if(world_rank ==0 ){
+            printf("%lld,%f \n",n, exec_time);
+        }
         // printf("%d complete\n",world_rank);
         MPI_Gather(arr,no_element_per_process,MPI_LONG_LONG,ar,no_element_per_process,MPI_LONG_LONG,0,MPI_COMM_WORLD);
 

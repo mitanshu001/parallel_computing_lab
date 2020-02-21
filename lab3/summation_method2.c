@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
 
-    long long n = 1;
+    long long n = 8;
 
     for(long long k=1;k<=SIZE;++k){
         n*=1LL*8;
@@ -44,6 +44,7 @@ int main(int argc, char** argv) {
             start = 0;
         } 
         long long sz  = n;
+
         while(height>0){
             sz = sz>>1;
             if( world_rank%(1<<height) == 0 ){
@@ -62,7 +63,8 @@ int main(int argc, char** argv) {
             height--;
         }
         // printf("ARR: %d %lld \n",world_rank,no_element_per_process);
-
+        MPI_Barrier(MPI_COMM_WORLD);
+        exec_time -= MPI_Wtime();
         for(int i=0;i<no_element_per_process;++i){
             sum+=arr[i];
         }
@@ -79,8 +81,10 @@ int main(int argc, char** argv) {
             }
             depth++;
         }
+        MPI_Barrier(MPI_COMM_WORLD);
+        exec_time += MPI_Wtime();
         if(world_rank ==0 ){
-            printf("n: %lld sum: %lld \n",n, sum);
+            printf("%lld,%f \n",n, exec_time);
         }
     }
 

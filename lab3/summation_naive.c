@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #define SIZE 7
 int main(int argc, char** argv) {
-    freopen("summation_naive.csv","+a",stdout);
+    freopen("summation_naive2.csv","+a",stdout);
     // Initialize the MPI environment
     MPI_Init(NULL, NULL);
 
@@ -67,9 +67,11 @@ int main(int argc, char** argv) {
                 sum+=temp;
             }
             // printf("ending");
-            exec_time += MPI_Wtime();
-            printf("%lld,%f\n",n,exec_time);
+
         }
+        MPI_Barrier(MPI_COMM_WORLD);
+        exec_time += MPI_Wtime();
+        printf("%lld,%f\n",n,exec_time);
     }
 
 
