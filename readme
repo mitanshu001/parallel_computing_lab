@@ -1,0 +1,7 @@
+*****Lab1***'
+naive implementation - cache_naive.cpp, myfile.csv
+optimisation1 -cache_opt1.cpp, myfile1.csv 
+optimisation2 - cache_opt2.cpp, myfile2.csv
+optimisation3 - cache_opt3.cpp, myfile3.csv 
+cache_opt3_x , myfile3_x - opt3 method with x cache size 
+plot.py and plot2.py are used to plot the graphs
