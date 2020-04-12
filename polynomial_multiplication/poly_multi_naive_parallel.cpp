@@ -25,7 +25,8 @@ struct params{
 
 struct params2 : params{
     int target;
-    void par(int l1,int l2,int r1,int r2,int * pol,int *pol2,int **pol3,int t){
+    int * ans;
+    void par(int l1,int l2,int r1,int r2,int * pol,int *pol2,int *an,int t){
         target =t;
         poly1_l = l1;
         poly1_r = l2;
@@ -33,7 +34,7 @@ struct params2 : params{
         poly2_r = r2;
         poly1 = pol;
         poly2 = pol2; 
-        poly3 = pol3;
+        ans = an;
     }
 };
 
@@ -45,20 +46,20 @@ void * fill(void * p_params){
     int poly2_r = param->poly2_r;
     int* poly1=  param->poly1;
     int* poly2 = param->poly2;
-    int** poly3 = param->poly3;
+    int* ans = param->ans;
     int n1 = poly1_r - poly1_l;
     int n2 = poly2_r - poly2_l;
     int target = param->target;
-    int *ans;
-    ans = new int();
-    memset(ans,0,sizeof(int));
-    for(int i=poly1_l;i<poly1_l;++i){
+    // int g= 0;
+    // int *r = &g;
+
+    for(int i=poly1_l;i<poly1_r;++i){
         int j = target - i;
         if(j>=poly2_l && j<poly2_r){
-            *ans+=poly1[i]*poly2[j];
+            ans[target]+=poly1[i]*poly2[j];
         }
     }
-    *poly3 = ans;
+    // *poly3 = r;
     pthread_exit(NULL);
 }
 
@@ -76,18 +77,18 @@ void* naive_prod(void* p_params){
     int n1 = poly1_r - poly1_l;
     int n2 = poly2_r - poly2_l;
     
-    int * ans = new int[n1 +n2];
+    int *ans = new int[n1+n2];
+    memset(ans,0,sizeof(int));
     pthread_t th[n1+n2];
-    // int temp[n1+n2];
     params2 p[n1+n2];
     for(int i=0;i<n1+n2;++i){
-        p[i].par(poly1_l,poly1_r,poly2_l,poly2_r,poly1,poly2,&ans+i,i);
+        p[i].par(poly1_l,poly1_r,poly2_l,poly2_r,poly1,poly2,ans,i);
         int tn = pthread_create(th + i,NULL,&fill, (void*)(p+ i));
     }
     for(int i=0;i<n1+n2;++i){
         pthread_join(th[i],NULL);
     }
-    *poly3 =ans;
+    *poly3 = ans;
     pthread_exit(NULL);
 }
 
