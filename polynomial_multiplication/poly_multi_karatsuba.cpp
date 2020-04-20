@@ -1,6 +1,7 @@
 #include <bits/stdc++.h> 
 using namespace std; 
-#define LOW 100
+using namespace std::chrono;
+#define LOW 50
 struct params{
     int poly1_l;
     int poly1_r;
@@ -50,8 +51,6 @@ void * fill(void * p_params){
     int n1 = poly1_r - poly1_l;
     int n2 = poly2_r - poly2_l;
     int target = param->target;
-    // int g= 0;
-    // int *r = &g;
 
     for(int i=poly1_l;i<poly1_r;++i){
         int j = target - i;
@@ -59,7 +58,6 @@ void * fill(void * p_params){
             ans[target]+=poly1[i]*poly2[j];
         }
     }
-    // *poly3 = r;
     pthread_exit(NULL);
 }
 
@@ -75,7 +73,7 @@ void* naive_prod(void* p_params){
     int** poly3 = param->poly3;
     int n1 = poly1_r - poly1_l;
     int n2 = poly2_r - poly2_l;
-    
+    // cout<<poly1_l<<"*"<<poly1_r<<" "<<poly2_l<<" "<<poly2_r<<endl;
     int *ans = new int[n1+n2];
     memset(ans,0,sizeof(int));
     pthread_t th[n1+n2];
@@ -109,71 +107,77 @@ void* karatsuba(void* p_params){
     int n2 = poly2_r - poly2_l;
     
     if(n1<=LOW || n2<= LOW){
-        params p(poly1_l,poly1_r,poly2_l,poly2_r,poly1,poly2,poly3);
+        // cout<<poly1_l<<" "<<poly1_r<<" "<<poly2_l<<" "<<poly2_r<<endl;
+        params p(0,n1,0,n2,poly1+poly1_l,poly2+poly2_l,poly3);
         pthread_t th;
         pthread_create(&th,NULL,&naive_prod,&p);
         pthread_join(th,NULL);
+        // cout<<" "<<poly1_l<<" "<<poly1_r<<" "<<poly2_l<<" "<<poly2_r<<endl;
         pthread_exit(NULL);
     }
+    else{
+        // cout<<"sr"<<endl;
+        int *ans2;
+        pthread_t th1;
+        params p1(poly1_mid,poly1_r,poly2_mid,poly2_r,poly1,poly2,&ans2);
+        int tn1 = pthread_create(&th1,NULL,&karatsuba,&p1);
 
-    int *ans2;
-    pthread_t th1;
-    params p1(poly1_mid,poly1_r,poly2_mid,poly2_r,poly1,poly2,&ans2);
-    int tn1 = pthread_create(&th1,NULL,&karatsuba,&p1);
-    // check_error(tn1);
+        int *ans1;
+        pthread_t th2;
+        params p2(poly1_l,poly1_mid,poly2_l,poly2_mid,poly1,poly2,&ans1);
+        int tn2 = pthread_create(&th2,NULL,&karatsuba,&p2);
 
-    int *ans1;
-    pthread_t th2;
-    params p2(poly1_l,poly1_mid,poly2_l,poly2_mid,poly1,poly2,&ans1);
-    int tn2 = pthread_create(&th2,NULL,&karatsuba,&p2);
+        pthread_join(th1,NULL);
+        pthread_join(th2,NULL);
+        // cout<<"hu"<<endl;
+        int* left = new int[poly1_mid - poly1_l];
+        int* right = new int[poly2_mid - poly2_l];
 
-    int* left = new int[poly1_mid - poly1_l];
-    int* right = new int[poly2_mid - poly2_l];
+        for(int i=0;i<poly1_mid - poly1_l;++i){
+            left[i] = poly1[poly1_l + i] + poly1[poly1_mid + i];
+        }
 
-    for(int i=0;i<poly1_mid - poly1_l;++i){
-        left[i] = poly1[poly1_l + i] + poly1[poly1_mid + i];
+        for(int i=0;i<poly2_mid - poly2_l;++i){
+            right[i] = poly2[poly2_l + i] + poly2[poly2_mid + i];
+        }
+
+        int *ans3;
+        pthread_t th3;
+        params p3(0,poly1_mid-poly1_l,0,poly2_mid - poly2_l , left,right,&ans3);
+        int tn3 = pthread_create(&th3,NULL,&karatsuba,&p3);
+
+    
+        pthread_join(th3,NULL);
+        // cout<<"yu[t"<<endl;
+        delete [] left,right;
+
+        for(int i=0;i<2*(poly1_mid-poly1_l);++i){
+            ans3[i] -= (ans1[i] + ans2[i]);
+        }
+
+        int * ans  = new int[n1 + n2];
+        memset(ans,0,sizeof(int)*(n1+n2));
+
+        for(int i=0;i < poly1_mid-poly1_l + poly2_mid-poly2_l; ++i){
+            ans[i] +=  ans1[i];
+        }
+
+        int bs = poly1_mid-poly1_l + poly2_mid-poly2_l;
+        for(int i=0;i < poly1_r - poly1_mid + poly2_r - poly2_mid ;++i )
+        {
+            ans[bs + i] += ans2[i];
+        }   
+
+        bs = poly1_mid - poly1_l;
+        for(int i=0;i<poly1_mid - poly1_l + poly2_mid - poly2_l;++i){
+            ans[i+bs] +=ans3[i];
+        }
+
+        *poly3 = ans;
+        delete[] ans1,ans2,ans3;
+        // cout<<"yup"<<endl;
+        pthread_exit(NULL);
     }
-
-    for(int i=0;i<poly2_mid - poly2_l;++i){
-        right[i] = poly2[poly2_l + i] + poly2[poly2_mid + i];
-    }
-
-    int *ans3;
-    pthread_t th3;
-    params p3(0,poly1_mid-poly1_l,0,poly2_mid - poly2_l , left,right,&ans3);
-    int tn3 = pthread_create(&th3,NULL,&karatsuba,&p3);
-
-    pthread_join(th1,NULL);
-    pthread_join(th2,NULL);
-    pthread_join(th3,NULL);
-
-    delete [] left,right;
-
-    for(int i=0;i<2*(poly1_mid-poly1_l);++i){
-        ans3[i] -= (ans1[i] + ans2[i]);
-    }
-
-    int * ans  = new int[n1 + n2];
-    memset(ans,0,sizeof(int)*(n1+n2));
-
-    for(int i=0;i < poly1_mid-poly1_l + poly2_mid-poly2_l; ++i){
-        ans[i] +=  ans1[i];
-    }
-
-    int bs = poly1_mid-poly1_l + poly2_mid-poly2_l;
-    for(int i=0;i < poly1_r - poly1_mid + poly2_r - poly2_mid ;++i )
-    {
-        ans3[bs + i] += ans2[i];
-    }   
-
-    bs = poly1_mid - poly1_l;
-    for(int i=0;i<poly1_mid - poly1_l + poly2_mid - poly2_l;++i){
-        ans3[i+bs] +=ans3[i];
-    }
-
-    *poly3 = ans3;
-    delete[] ans1,ans2,ans3;
-    pthread_exit(NULL);
 }
 
 
@@ -203,21 +207,23 @@ void printPoly(int *poly, int n)
 
 int main() 
 { 
-    int A[] = {5, 0, 10, 6}; 
-    int B[] = {1, 2, 4}; 
-    int m = sizeof(A)/sizeof(A[0]); 
-    int n = sizeof(B)/sizeof(B[0]); 
-  
-    cout << "First polynomial is : "; 
-    printPoly(A, m); 
+    
+    freopen("karatsuba_output.csv","a",stdout);
+    for(int N=(1<<6);N<=(1<<12);N*=4){
+        int A[N];
+        int B[N];
+        for(int i=0;i<N;++i)A[i] = rand()%100;
+        for(int i=0;i<N;++i)B[i] = rand()%100;
+        int m = sizeof(A)/sizeof(A[0]); 
+        int n = sizeof(B)/sizeof(B[0]); 
+    
+        auto start = high_resolution_clock::now(); 
+        int *prod = multiply(A, B, m, n); 
+        auto stop = high_resolution_clock::now();
+	    auto duration = duration_cast<milliseconds>(stop - start);
+        cout<<N<<"\t"<<duration.count()<<endl;
+    }
 
-    cout << "Second polynomial is : "; 
-    printPoly(B, n); 
-  
-    int *prod = multiply(A, B, m, n); 
-  
-    cout << "Product polynomial is : "; 
-    printPoly(prod, m+n-1); 
   
     return 0; 
 } 

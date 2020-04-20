@@ -1,6 +1,6 @@
 #include <bits/stdc++.h> 
 using namespace std; 
-
+using namespace std::chrono;
 struct params{
     int poly1_l;
     int poly1_r;
@@ -118,23 +118,20 @@ void printPoly(int poly[], int n)
 } 
 
 int main() 
-{ 
-  // for(int )
-    int A[] = {5, 0, 10, 6}; 
-    int B[] = {1, 2, 4}; 
-    int m = sizeof(A)/sizeof(A[0]); 
-    int n = sizeof(B)/sizeof(B[0]); 
-  
-    cout << "First polynomial is : "; 
-    printPoly(A, m); 
-
-    cout << "Second polynomial is : "; 
-    printPoly(B, n); 
-  
-    int *prod = multiply(A, B, m, n); 
-  
-    cout << "Product polynomial is : "; 
-    printPoly(prod, m+n-1); 
-  
+{
+    freopen("naive_output.csv","a",stdout); 
+    for(int N=(1<<6);N<=(1<<12);N*=4){
+        int A[N];
+        int B[N];
+        for(int i=0;i<N;++i)A[i] = rand()%100;
+        for(int i=0;i<N;++i)B[i] = rand()%100;
+        int m = sizeof(A)/sizeof(A[0]); 
+        int n = sizeof(B)/sizeof(B[0]); 
+        auto start = high_resolution_clock::now(); 
+        int *prod = multiply(A, B, m, n); 
+        auto stop = high_resolution_clock::now();
+	    auto duration = duration_cast<milliseconds>(stop - start);
+        cout<<N<<"\t"<<duration.count()<<endl;  
+    }
     return 0; 
 } 

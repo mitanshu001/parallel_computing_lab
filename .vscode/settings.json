@@ -1,7 +1,11 @@
 {
     "files.associations": {
         "chrono": "cpp",
-        "iostream": "c"
+        "iostream": "c",
+        "ostream": "cpp",
+        "complex": "cpp",
+        "numeric": "cpp",
+        "cmath": "cpp"
     },
     "python.pythonPath": "/home/mitanshu.sheo/anaconda3/bin/python"
 }
