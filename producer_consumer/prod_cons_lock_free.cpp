@@ -49,7 +49,7 @@ void* producer(void* arg)
         int buffer_no=0;
         while(1){
             buffer_t * b = q->buff[buffer_no++];
-            buffer_no%=no_of_buffers;
+            buffer_no %=no_of_buffers;
             if (pthread_mutex_trylock(&b->mutex) == 0)
 			{
                 // cout<<"mutex lock in producer"<<b->occupied<<endl;
@@ -86,7 +86,7 @@ void* consumer(void *arg)
         while(1)
         {
             buffer_t * b = q->buff[buffer_no++];
-            buffer_no%=no_of_buffers;
+            buffer_no %= no_of_buffers;
             int item;
             if (pthread_mutex_trylock(&b->mutex) == 0)
 			{
@@ -114,14 +114,14 @@ void* consumer(void *arg)
 }
 
 #define SIZE 100
-int main(){
+int main(int argc, char *argv[]){
     // Queue is taken as array of buffers.
-
-    int no_of_consumers = 1000;
-    int no_of_producers = 1000;
-    BSIZE = 10;
-    no_of_buffers = 100;
-    
+    freopen("prod_cons_lock_free.csv","a",stdout);
+    int no_of_consumers = atoi(argv[2]);
+    int no_of_producers = atoi(argv[1]);
+    BSIZE = atoi(argv[4]);
+    no_of_buffers = atoi(argv[3]);
+    // cout<<"inside"<<endl;
     auto start = high_resolution_clock::now(); 
     consume=0;
     int sleep_time = 10; 
@@ -141,7 +141,7 @@ int main(){
     sleep(sleep_time);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start);
-    cout<<consume/(duration.count())<<endl;
-    
+    cout<<no_of_producers<<"\t"<<no_of_consumers<<"\t"<<BSIZE<<"\t"<<consume/(duration.count())<<endl;
+
     return 0;
 }

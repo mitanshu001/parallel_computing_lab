@@ -84,15 +84,16 @@ void* consumer(void *arg)
 }
 
 #define SIZE 100
-int main(){
-    int no_of_consumers = 1000;
-    int no_of_producers = 1000;
-    BSIZE = 1000;
+int main(int argc, char *argv[]){
+    freopen("prod_cons_lock.csv","a",stdout);
+    int no_of_consumers = atoi(argv[2]);
+    int no_of_producers = atoi(argv[1]);
+    BSIZE = atoi(argv[3]);
 
     auto start = high_resolution_clock::now(); 
     consume=0;
  
-    int sleep_time = 10; 
+    int sleep_time = 5; 
     
     buffer_t buffer;
     pthread_t prod[no_of_producers], cons[no_of_consumers];
@@ -108,7 +109,7 @@ int main(){
     sleep(sleep_time);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start);
-    cout<<consume/(duration.count())<<endl;
+    cout<<no_of_producers<<"\t"<<no_of_consumers<<"\t"<<BSIZE<<"\t"<<consume/(duration.count())<<endl;
     
     return 0;
 }
