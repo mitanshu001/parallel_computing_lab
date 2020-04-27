@@ -5,7 +5,8 @@
         "ostream": "cpp",
         "complex": "cpp",
         "numeric": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "type_traits": "cpp"
     },
     "python.pythonPath": "/home/mitanshu.sheo/anaconda3/bin/python"
 }

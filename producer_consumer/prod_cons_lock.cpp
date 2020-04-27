@@ -48,7 +48,7 @@ void* producer(void* arg)
 
         b->nextin %= BSIZE;
         b->occupied++;
-        cout<<"producer is here"<<endl;
+        // cout<<"producer is here"<<endl;
         pthread_cond_signal(&b->more);
 
         pthread_mutex_unlock(&b->mutex);
@@ -64,43 +64,51 @@ void* consumer(void *arg)
     int pre =rand()%3;
     while(1){
         sleep(pre);
-        char item;
+        int item;
         pthread_mutex_lock(&b->mutex);
         while(b->occupied <= 0)
             pthread_cond_wait(&b->more, &b->mutex);
 
         assert(b->occupied > 0);
-        
         item = b->buf[b->nextout++];
         b->nextout %= BSIZE;
         b->occupied--;
         pre =item;
         // p->item = item;
-        cout<<"consumer was here"<<endl;
+        // cout<<"consumer was here"<<endl;
         pthread_cond_signal(&b->less);
         pthread_mutex_unlock(&b->mutex);
-        consume++;        
-
+        consume+=item;
     }
     pthread_exit(NULL);
 }
 
 #define SIZE 100
 int main(){
-    consume=0;
-    BSIZE =16; 
-    int sleep_time = 20; 
-    int iteration = SIZE;
-    buffer_t buffer;
-    pthread_t prod[SIZE], cons[SIZE];
-    int i=0;
-    while(iteration--){
-        pthread_create(&prod[i], NULL, producer, (void*)&buffer);
-        pthread_create(&cons[i], NULL, consumer, (void*)&buffer);
-        ++i;
-    }
+    int no_of_consumers = 1000;
+    int no_of_producers = 1000;
+    BSIZE = 1000;
 
+    auto start = high_resolution_clock::now(); 
+    consume=0;
+ 
+    int sleep_time = 10; 
+    
+    buffer_t buffer;
+    pthread_t prod[no_of_producers], cons[no_of_consumers];
+    
+    int i=0;
+    for(int i=0;i<no_of_producers;++i){
+        pthread_create(&prod[i], NULL, producer, (void*)&buffer);
+    }
+    for(int i=0;i<no_of_consumers;++i){
+        pthread_create(&cons[i], NULL, consumer, (void*)&buffer);
+    }
+    
     sleep(sleep_time);
-    cout<<(2*consume)/sleep_time<<endl;
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<seconds>(stop - start);
+    cout<<consume/(duration.count())<<endl;
+    
     return 0;
 }
