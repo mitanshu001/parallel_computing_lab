@@ -11,3 +11,4 @@ pi_computation_reduction.c : Optimized ( with reduction ). Time vs no of threads
 pi_computation_reduction_precision.c : Optimized ( with reduction ). Time vs precision.
 pi_computation_atomic.c :Naive (atomic). Time vs no of threads.
 pi_computation_atomic_precision.c : Naive ( atomic ). Time vs precision.
+pi
